@@ -9,12 +9,86 @@ public class cityScript : MonoBehaviour {
     // Ground plane object 
     private GameObject groundPlane;
 
+    // Road parameters 
+    // Road width 
+    public float roadwidth;
+
+    // Building block parameters
+    // Minimum area 
+    public float minBuildingBlockArea; 
+
+    // Area calculation function 
+    // Parameters: 
+    // Array of four vertices 
+    private float calculateArea(Vector3[] vertices)
+    {
+        // Calculate four sides of quad 
+        Vector3 sideOne = vertices[1] - vertices[0];
+        Vector3 sideTwo = vertices[2] - vertices[0];
+        Vector3 sideThree = vertices[1] - vertices[3];
+        Vector3 sideFour = vertices[2] - vertices[3]; 
+
+        // Calculate area 
+        return 0.5f * Vector3.Cross(sideOne, sideTwo).magnitude + 0.5f * Vector3.Cross(sideThree, sideFour).magnitude; 
+    }
+
+
     // Plane subdivision function 
     // Parameters: 
     // GameObject originPlane: Plane for subdivision
-    private void subdivide(GameObject originPlane)
+    // bool Lengthwise division: Determines if length-wise or width-wise division
+    private void subdivide(GameObject originPlane, bool lengthWiseDivision)
     {
+        // Get vertices of original plane 
+        Vector3[] originVert = originPlane.GetComponent<MeshFilter>().mesh.vertices;
 
+        // Calculate original area 
+        float areaOrigin = calculateArea(originVert); 
+
+        // Catch base-case: 
+        if(areaOrigin >= minBuildingBlockArea)
+        {
+            // Calculate position of division
+            float divisionPositionOne = Random.Range(0.2f, 0.8f);
+            float divisionPositionTwo = Random.Range(0.2f, 0.8f);
+            // Get positions of each vertex 
+            // Bottom Left 
+            Vector3 BL = originVert[0];
+            // Bottom Right 
+            Vector3 BR = originVert[1];
+            // Top Left 
+            Vector3 TL = originVert[2];
+            // Top Right 
+            Vector3 TR = originVert[3];
+            // Initialize new quads 
+            GameObject quadA;
+            GameObject quadB; 
+            // Length-wise division 
+            if (lengthWiseDivision)
+            {
+                quadA = quadMesh(new Vector3[]{BL, BL + (BR - BL) * divisionPositionOne - (BR - BL).normalized * roadwidth * 0.5f, TL, TL + (TR - TL) * divisionPositionTwo - (TR - TL).normalized * roadwidth * 0.5f});
+                quadB = quadMesh(new Vector3[] { BL + (BR - BL) * divisionPositionOne + (BR - BL).normalized * roadwidth * 0.5f, BR, TL + (TR - TL) * divisionPositionTwo + (TR - TL).normalized * roadwidth * 0.5f, TR});
+            }
+            // Width-wise division
+            else
+            {
+                // Calculate the two building blocks
+                quadA = quadMesh(new Vector3[]{BL, BR, BL + (TL-BL)*divisionPositionOne - (TL - BL).normalized * roadwidth * 0.5f, BR + (TR - BR) * divisionPositionTwo - (TR - BR).normalized * roadwidth * 0.5f });
+                quadB = quadMesh(new Vector3[]{BL + (TL - BL) * divisionPositionOne + (TL - BL).normalized * roadwidth * 0.5f, BR + (TR - BR) * divisionPositionTwo + (TR - BR).normalized * roadwidth * 0.5f, TL, TR});
+            }
+            // Set names 
+            quadA.name = "BuildingBlock";
+            quadB.name = "BuildingBlock";
+            // Set parent object 
+            quadA.transform.SetParent(this.transform);
+            quadB.transform.SetParent(this.transform);
+            // Destroy previous 
+            DestroyImmediate(originPlane);
+            // Recursive call 
+            subdivide(quadA, !lengthWiseDivision);
+            subdivide(quadB, !lengthWiseDivision);
+
+        }
     }
 
     // Quad mesh generation function 
@@ -118,6 +192,14 @@ public class cityScript : MonoBehaviour {
         GameObject buildingBlock = quadMesh(groundPlaneVertices);
         buildingBlock.name = "BuildingBlock";
         buildingBlock.transform.SetParent(this.transform);
+
+        // Subdivide buildingBlock 
+        // Determine first division 
+        bool lengthWiseDivision = Random.value > 0.5f;
+        subdivide(buildingBlock, lengthWiseDivision);
+
+        // Disable ground plane visibility 
+        groundPlane.SetActive(false);
     }
 	
 	// Update is called once per frame

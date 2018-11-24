@@ -223,6 +223,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundPlaneLength: 100
   groundPlaneWidth: 100
+  roadwidth: 1
+  minBuildingBlockArea: 20
 --- !u!4 &1830812645
 Transform:
   m_ObjectHideFlags: 0
