@@ -247,6 +247,7 @@ public class cityScript : MonoBehaviour {
                     minAllowableBlockWidth, minAllowableBlockLength);
         // Make further divisions to initially generated plots
         // For actual building parameters in a block
+        /*
         foreach(GameObject aBuildingBlock in GameObject.FindGameObjectsWithTag("Untagged"))
         {
             if(aBuildingBlock.name == "BuildingBlock")
@@ -255,6 +256,7 @@ public class cityScript : MonoBehaviour {
                     minAllowableBuildingWidth, minAllowableBuildingLength);
             }
         }
+        */
         // Disable ground plane visibility 
         groundPlane.SetActive(false);
     }
