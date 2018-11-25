@@ -124,6 +124,7 @@ GameObject:
   - component: {fileID: 334240579}
   - component: {fileID: 334240578}
   - component: {fileID: 334240577}
+  - component: {fileID: 334240581}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -188,12 +189,24 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 334240576}
   m_LocalRotation: {x: 0.38268343, y: 0, z: 0, w: 0.92387956}
-  m_LocalPosition: {x: 0, y: 100, z: -100}
+  m_LocalPosition: {x: 0, y: 150, z: -150}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 45, y: 0, z: 0}
+--- !u!114 &334240581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 334240576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 152af54db987e9c4f874a9db0368b8df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 20
 --- !u!1 &1830812643
 GameObject:
   m_ObjectHideFlags: 0
@@ -221,16 +234,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 761151eac1844ff43ae706699b12aaae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundPlaneLength: 150
-  groundPlaneWidth: 150
+  groundPlaneLength: 100
+  groundPlaneWidth: 100
   roadwidth: 6
   roadVariance: 2
   minBlockArea: 200
-  minAllowableBlockWidth: 5
-  minAllowableBlockLength: 5
+  minAllowableBlockWidth: 10
+  minAllowableBlockLength: 10
   minBuildingArea: 50
-  minAllowableBuildingWidth: 3
-  minAllowableBuildingLength: 3
+  minAllowableBuildingWidth: 5
+  minAllowableBuildingLength: 5
   minAllowableBuildingHeight: 60
   maxAllowableBuildingHeight: 5
 --- !u!4 &1830812645
