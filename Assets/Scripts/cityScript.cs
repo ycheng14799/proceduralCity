@@ -13,11 +13,17 @@ public class cityScript : MonoBehaviour {
     // Road width 
     public float roadwidth;
 
-    // Building block parameters
-    // Minimum area 
-    public float minBuildingBlockArea;
-    public float minAllowableWidth;
-    public float minAllowableLength;
+    // Block parameters
+    // Minimum dimensions  
+    public float minBlockArea;
+    public float minAllowableBlockWidth;
+    public float minAllowableBlockLength;
+
+    // Building parameters 
+    // Minimum dimensions 
+    public float minBuildingArea;
+    public float minAllowableBuildingWidth;
+    public float minAllowableBuildingLength;
 
     // Area calculation function 
     // Parameters: 
@@ -39,7 +45,8 @@ public class cityScript : MonoBehaviour {
     // Parameters: 
     // GameObject originPlane: Plane for subdivision
     // bool Lengthwise division: Determines if length-wise or width-wise division
-    private void subdivide(GameObject originPlane, bool lengthWiseDivision)
+    private void subdivide(GameObject originPlane, bool lengthWiseDivision, bool includeRoad, float minBuildingBlockArea, 
+        float minAllowableWidth, float minAllowableLength)
     {
         // Get vertices of original plane 
         Vector3[] originVert = originPlane.GetComponent<MeshFilter>().mesh.vertices;
@@ -70,7 +77,16 @@ public class cityScript : MonoBehaviour {
             // Initialize new quads 
             GameObject quadA;
             GameObject quadB;
-            float roadWidthWithNoise = roadwidth + Random.Range(-0.5f, 0.5f);
+
+            // Initialize roadWidthWithNoise variable
+            float roadWidthWithNoise;
+            if (includeRoad)
+            {
+                roadWidthWithNoise = roadwidth + Random.Range(-0.5f, 0.5f);
+            } else
+            {
+                roadWidthWithNoise = 0.0f;
+            }
             // Length-wise division 
             if (lengthWiseDivision && minWidth > minAllowableWidth)
             {
@@ -85,8 +101,10 @@ public class cityScript : MonoBehaviour {
                 // Destroy previous 
                 DestroyImmediate(originPlane);
                 // Recursive call 
-                subdivide(quadA, !lengthWiseDivision);
-                subdivide(quadB, !lengthWiseDivision);
+                subdivide(quadA, !lengthWiseDivision, includeRoad, minBuildingBlockArea,
+                    minAllowableWidth, minAllowableLength);
+                subdivide(quadB, !lengthWiseDivision, includeRoad, minBuildingBlockArea,
+                    minAllowableWidth, minAllowableLength);
             }
             // Width-wise division
             else if (!lengthWiseDivision && minLength > minAllowableLength)
@@ -103,12 +121,15 @@ public class cityScript : MonoBehaviour {
                 // Destroy previous 
                 DestroyImmediate(originPlane);
                 // Recursive call 
-                subdivide(quadA, !lengthWiseDivision);
-                subdivide(quadB, !lengthWiseDivision);
+                subdivide(quadA, !lengthWiseDivision, includeRoad, minBuildingBlockArea,
+                    minAllowableWidth, minAllowableLength);
+                subdivide(quadB, !lengthWiseDivision, includeRoad, minBuildingBlockArea,
+                    minAllowableWidth, minAllowableLength);
             }
             else
             {
-                subdivide(originPlane, !lengthWiseDivision);
+                subdivide(originPlane, !lengthWiseDivision, includeRoad, minBuildingBlockArea,
+                    minAllowableWidth, minAllowableLength);
             }
             
 
@@ -220,8 +241,24 @@ public class cityScript : MonoBehaviour {
         // Subdivide buildingBlock 
         // Determine first division 
         bool lengthWiseDivision = Random.value > 0.5f;
-        subdivide(buildingBlock, lengthWiseDivision);
+        // First recursive call to subdivide 
+        // Generate road map 
+        subdivide(buildingBlock, lengthWiseDivision, true, minBlockArea,
+                    minAllowableBlockWidth, minAllowableBlockLength);
+        // Make further divisions to initially generated plots
+        // For actual building parameters in a block
+        /*
+        foreach(GameObject child in this.transform)
+        {
+            if(child.name == "BuildingBlock")
+            {
 
+                lengthWiseDivision = Random.value > 0.5f;
+                subdivide(child, lengthWiseDivision, false, minBuildingArea,
+                    minAllowableBuildingWidth, minAllowableBuildingLength);
+            }
+        }
+        */
         // Disable ground plane visibility 
         groundPlane.SetActive(false);
     }
@@ -229,7 +266,6 @@ public class cityScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-
         // Generate roadmap 
         generateRoadMap();
 
