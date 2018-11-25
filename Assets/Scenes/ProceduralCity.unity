@@ -221,10 +221,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 761151eac1844ff43ae706699b12aaae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  groundPlaneLength: 100
-  groundPlaneWidth: 100
-  roadwidth: 5
-  roadVariance: 1
+  groundPlaneLength: 150
+  groundPlaneWidth: 150
+  roadwidth: 6
+  roadVariance: 2
   minBlockArea: 200
   minAllowableBlockWidth: 5
   minAllowableBlockLength: 5
