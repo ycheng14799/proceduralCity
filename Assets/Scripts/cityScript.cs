@@ -15,7 +15,9 @@ public class cityScript : MonoBehaviour {
 
     // Building block parameters
     // Minimum area 
-    public float minBuildingBlockArea; 
+    public float minBuildingBlockArea;
+    public float minAllowableWidth;
+    public float minAllowableLength;
 
     // Area calculation function 
     // Parameters: 
@@ -60,33 +62,55 @@ public class cityScript : MonoBehaviour {
             Vector3 TL = originVert[2];
             // Top Right 
             Vector3 TR = originVert[3];
+            // Get minimum length 
+            float minWidth = Mathf.Min((BR - BL).magnitude, (TR - TL).magnitude);
+            float minLength = Mathf.Min((TL - BL).magnitude, (TR - BR).magnitude);
+            // Get minimum width 
+
             // Initialize new quads 
             GameObject quadA;
-            GameObject quadB; 
+            GameObject quadB;
+            float roadWidthWithNoise = roadwidth + Random.Range(-0.5f, 0.5f);
             // Length-wise division 
-            if (lengthWiseDivision)
+            if (lengthWiseDivision && minWidth > minAllowableWidth)
             {
-                quadA = quadMesh(new Vector3[]{BL, BL + (BR - BL) * divisionPositionOne - (BR - BL).normalized * roadwidth * 0.5f, TL, TL + (TR - TL) * divisionPositionTwo - (TR - TL).normalized * roadwidth * 0.5f});
-                quadB = quadMesh(new Vector3[] { BL + (BR - BL) * divisionPositionOne + (BR - BL).normalized * roadwidth * 0.5f, BR, TL + (TR - TL) * divisionPositionTwo + (TR - TL).normalized * roadwidth * 0.5f, TR});
+                quadA = quadMesh(new Vector3[]{BL, BL + (BR - BL) * divisionPositionOne - (BR - BL).normalized * roadWidthWithNoise * 0.5f, TL, TL + (TR - TL) * divisionPositionTwo - (TR - TL).normalized * roadWidthWithNoise * 0.5f});
+                quadB = quadMesh(new Vector3[] { BL + (BR - BL) * divisionPositionOne + (BR - BL).normalized * roadWidthWithNoise * 0.5f, BR, TL + (TR - TL) * divisionPositionTwo + (TR - TL).normalized * roadWidthWithNoise * 0.5f, TR});
+                // Set names 
+                quadA.name = "BuildingBlock";
+                quadB.name = "BuildingBlock";
+                // Set parent object 
+                quadA.transform.SetParent(this.transform);
+                quadB.transform.SetParent(this.transform);
+                // Destroy previous 
+                DestroyImmediate(originPlane);
+                // Recursive call 
+                subdivide(quadA, !lengthWiseDivision);
+                subdivide(quadB, !lengthWiseDivision);
             }
             // Width-wise division
-            else
+            else if (!lengthWiseDivision && minLength > minAllowableLength)
             {
                 // Calculate the two building blocks
-                quadA = quadMesh(new Vector3[]{BL, BR, BL + (TL-BL)*divisionPositionOne - (TL - BL).normalized * roadwidth * 0.5f, BR + (TR - BR) * divisionPositionTwo - (TR - BR).normalized * roadwidth * 0.5f });
-                quadB = quadMesh(new Vector3[]{BL + (TL - BL) * divisionPositionOne + (TL - BL).normalized * roadwidth * 0.5f, BR + (TR - BR) * divisionPositionTwo + (TR - BR).normalized * roadwidth * 0.5f, TL, TR});
+                quadA = quadMesh(new Vector3[]{BL, BR, BL + (TL-BL)*divisionPositionOne - (TL - BL).normalized * roadWidthWithNoise * 0.5f, BR + (TR - BR) * divisionPositionTwo - (TR - BR).normalized * roadWidthWithNoise * 0.5f });
+                quadB = quadMesh(new Vector3[]{BL + (TL - BL) * divisionPositionOne + (TL - BL).normalized * roadWidthWithNoise * 0.5f, BR + (TR - BR) * divisionPositionTwo + (TR - BR).normalized * roadWidthWithNoise * 0.5f, TL, TR});
+                // Set names 
+                quadA.name = "BuildingBlock";
+                quadB.name = "BuildingBlock";
+                // Set parent object 
+                quadA.transform.SetParent(this.transform);
+                quadB.transform.SetParent(this.transform);
+                // Destroy previous 
+                DestroyImmediate(originPlane);
+                // Recursive call 
+                subdivide(quadA, !lengthWiseDivision);
+                subdivide(quadB, !lengthWiseDivision);
             }
-            // Set names 
-            quadA.name = "BuildingBlock";
-            quadB.name = "BuildingBlock";
-            // Set parent object 
-            quadA.transform.SetParent(this.transform);
-            quadB.transform.SetParent(this.transform);
-            // Destroy previous 
-            DestroyImmediate(originPlane);
-            // Recursive call 
-            subdivide(quadA, !lengthWiseDivision);
-            subdivide(quadB, !lengthWiseDivision);
+            else
+            {
+                subdivide(originPlane, !lengthWiseDivision);
+            }
+            
 
         }
     }
@@ -179,9 +203,9 @@ public class cityScript : MonoBehaviour {
         
     }
 
-
-	// Use this for initialization
-	void Start () {
+    // Function for building the roadmap 
+    private void generateRoadMap()
+    {
         // Initialize the ground plane
         initializeGroundPlane(groundPlaneLength, groundPlaneWidth);
 
@@ -200,6 +224,15 @@ public class cityScript : MonoBehaviour {
 
         // Disable ground plane visibility 
         groundPlane.SetActive(false);
+    }
+
+
+	// Use this for initialization
+	void Start () {
+
+        // Generate roadmap 
+        generateRoadMap();
+
     }
 	
 	// Update is called once per frame
