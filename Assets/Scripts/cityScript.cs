@@ -247,18 +247,14 @@ public class cityScript : MonoBehaviour {
                     minAllowableBlockWidth, minAllowableBlockLength);
         // Make further divisions to initially generated plots
         // For actual building parameters in a block
-        /*
-        foreach(GameObject child in this.transform)
+        foreach(GameObject aBuildingBlock in GameObject.FindGameObjectsWithTag("Untagged"))
         {
-            if(child.name == "BuildingBlock")
+            if(aBuildingBlock.name == "BuildingBlock")
             {
-
-                lengthWiseDivision = Random.value > 0.5f;
-                subdivide(child, lengthWiseDivision, false, minBuildingArea,
+                subdivide(aBuildingBlock, lengthWiseDivision, false, minBuildingArea,
                     minAllowableBuildingWidth, minAllowableBuildingLength);
             }
         }
-        */
         // Disable ground plane visibility 
         groundPlane.SetActive(false);
     }
