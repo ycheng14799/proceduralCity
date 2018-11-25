@@ -223,13 +223,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundPlaneLength: 100
   groundPlaneWidth: 100
-  roadwidth: 1.5
-  minBlockArea: 100
+  roadwidth: 5
+  roadVariance: 1
+  minBlockArea: 200
   minAllowableBlockWidth: 5
   minAllowableBlockLength: 5
   minBuildingArea: 50
   minAllowableBuildingWidth: 3
   minAllowableBuildingLength: 3
+  minAllowableBuildingHeight: 60
+  maxAllowableBuildingHeight: 5
 --- !u!4 &1830812645
 Transform:
   m_ObjectHideFlags: 0
