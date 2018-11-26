@@ -505,8 +505,43 @@ public class cityScript : MonoBehaviour {
             initVertices[9]
         };
 
-        // Subdivide initial ground plane
-}
+        // Subdivide building ground plane
+        // Bottom Left 
+        Vector3 BL = initGroundPlane[0];
+        // Bottom Right 
+        Vector3 BR = initGroundPlane[1];
+        // Top Left 
+        Vector3 TL = initGroundPlane[2];
+        // Top Right 
+        Vector3 TR = initGroundPlane[3];
+        // Get the minimum "length" and "width"
+        float minBuildLength = Mathf.Min((TL - BL).magnitude, (TR - BR).magnitude);
+        float minBuildWidth = Mathf.Min((BL - BR).magnitude, (TL - TR).magnitude);
+
+        // Check if length-wise division can be done
+        bool lengthWiseValid = percentageSplit * minBuildLength > minMainSideLength;
+
+        // Check if width-wise division can be done 
+        bool widthWiseValid = percentageSplit * minBuildWidth > minMainSideLength;
+
+        // If both length-wise and width-wise are valid 
+        if(lengthWiseValid && widthWiseValid)
+        {
+            // Decide on length-wise or width-wise 
+        }
+        // Otherwise perform the valid operation 
+        else if (lengthWiseValid)
+        {
+            // Length-wise division 
+        } 
+        else if (widthWiseValid)
+        {
+            // Width-wise division 
+        }
+
+
+
+    }
 
 	// Use this for initialization
 	void Start () {

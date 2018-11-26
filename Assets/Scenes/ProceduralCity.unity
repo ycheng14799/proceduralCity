@@ -246,6 +246,9 @@ MonoBehaviour:
   minAllowableBuildingLength: 5
   minAllowableBuildingHeight: 5
   maxAllowableBuildingHeight: 60
+  minMainPercentage: 0.4
+  maxMainPercentage: 0.6
+  minMainSideLength: 5
 --- !u!4 &1830812645
 Transform:
   m_ObjectHideFlags: 0
