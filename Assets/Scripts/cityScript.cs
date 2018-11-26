@@ -465,6 +465,18 @@ public class cityScript : MonoBehaviour {
         }
     }
 
+    // Function to get the height of a building
+    private float getBuildingHeight(GameObject building) {
+        float height = 0.0f;
+        return height; 
+    }
+
+    // Function to split building into main and sidewings: Create U-Shape
+    private void splitU(GameObject building)
+    {
+
+    }
+
 	// Use this for initialization
 	void Start () {
         // Generate roadmap 
