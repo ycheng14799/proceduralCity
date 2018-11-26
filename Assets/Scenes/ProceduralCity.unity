@@ -244,8 +244,8 @@ MonoBehaviour:
   minBuildingArea: 100
   minAllowableBuildingWidth: 5
   minAllowableBuildingLength: 5
-  minAllowableBuildingHeight: 60
-  maxAllowableBuildingHeight: 5
+  minAllowableBuildingHeight: 5
+  maxAllowableBuildingHeight: 60
 --- !u!4 &1830812645
 Transform:
   m_ObjectHideFlags: 0

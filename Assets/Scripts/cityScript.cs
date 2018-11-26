@@ -26,7 +26,10 @@ public class cityScript : MonoBehaviour {
     public float minAllowableBuildingWidth;
     public float minAllowableBuildingLength;
     public float minAllowableBuildingHeight;
-    public float maxAllowableBuildingHeight; 
+    public float maxAllowableBuildingHeight;
+    public float minMainPercentage;
+    public float maxMainPercentage;
+    public float minMainSideLength;
 
     // Area calculation function 
     // Parameters: 
@@ -468,14 +471,42 @@ public class cityScript : MonoBehaviour {
     // Function to get the height of a building
     private float getBuildingHeight(GameObject building) {
         float height = 0.0f;
+        // Get mesh vertices of the building GameObject 
+        Vector3[] vertices = building.GetComponent<MeshFilter>().mesh.vertices;
+        // Get vertex of top bottom left corner 
+        Vector3 upperRightCorner = vertices[12];
+        // Get Y component of upper right corner vertex 
+        height = upperRightCorner.y;
         return height; 
     }
 
     // Function to split building into main and sidewings: Create U-Shape
     private void splitU(GameObject building)
     {
+        // Get initial height of building 
+        float initHeight = getBuildingHeight(building);
+        // Get vertices of building
+        Vector3[] initVertices = building.GetComponent<MeshFilter>().mesh.vertices;
+        
+        /*
+        Constraints: 
+        minMainPercentage, maxMainPercentage, minMainSideLength
+        */
 
-    }
+        // Get percentage split 
+        float percentageSplit = Random.Range(minMainPercentage, maxMainPercentage);
+
+        // Get original building ground plane 
+        Vector3[] initGroundPlane = new Vector3[]
+        {
+            initVertices[0],
+            initVertices[3],
+            initVertices[6],
+            initVertices[9]
+        };
+
+        // Subdivide initial ground plane
+}
 
 	// Use this for initialization
 	void Start () {
@@ -485,6 +516,8 @@ public class cityScript : MonoBehaviour {
         generateBuildingLots();
         // Extrude buildings from building block
         extrudeAll(minAllowableBuildingHeight, maxAllowableBuildingHeight);
+        // Splt buildings into U-Shapes 
+        splitU(GameObject.FindGameObjectWithTag("Building"));
     }
 	
 	// Update is called once per frame
