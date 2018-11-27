@@ -485,7 +485,11 @@ public class cityScript : MonoBehaviour {
         return height; 
     }
 
-    private void separateSideWingsMain(float height, float heightPercentage, GameObject lotA, GameObject lotB)
+    // Function to separate the sidewing from the main building
+    // Returns a GameObject Array 
+    // First index of return array: Main 
+    // Second index of return array: Sidewing 
+    private GameObject[] separateSideWingsMain(float height, float heightPercentage, GameObject lotA, GameObject lotB)
     {
         Debug.Log(height);
         Debug.Log(heightPercentage);
@@ -493,23 +497,60 @@ public class cityScript : MonoBehaviour {
         // Parameter to decide which lot to make the sidewing 
         bool sideWingBool = Random.value > 0.5f;
 
+        GameObject MainBuilding, SideWing;
+
         if (sideWingBool)
         {
-            extrudeBuilding(height, lotA, "MainBuilding", "MainBuilding");
-            extrudeBuilding(height * heightPercentage, lotB, "SideWing", "SideWing");
+            MainBuilding = extrudeBuilding(height, lotA, "MainBuilding", "MainBuilding");
+            SideWing = extrudeBuilding(height * heightPercentage, lotB, "SideWing", "SideWing");
         }
         else
         {
-            extrudeBuilding(height, lotB, "MainBuilding", "MainBuilding");
-            extrudeBuilding(height * heightPercentage, lotA, "SideWing", "SideWing");
+            MainBuilding = extrudeBuilding(height, lotB, "MainBuilding", "MainBuilding");
+            SideWing = extrudeBuilding(height * heightPercentage, lotA, "SideWing", "SideWing");
         }
-        //DestroyImmediate(lotA);
-        //DestroyImmediate(lotB);
+
+        GameObject[] mainAndSide = new GameObject[] { MainBuilding, SideWing };
+        return mainAndSide;
+    }
+
+    // Function to create a gap in the side-wing building 
+    private void createGap(GameObject sideWing, bool lengthDivide)
+    {
+        // Get initial height of building 
+        float initHeight = getBuildingHeight(sideWing);
+        // Get vertices of building
+        Vector3[] initVertices = sideWing.GetComponent<MeshFilter>().mesh.vertices;
+        // Get original building ground plane 
+        Vector3[] initGroundPlane = new Vector3[]
+        {
+            initVertices[0],
+            initVertices[3],
+            initVertices[6],
+            initVertices[9]
+        };
+        // Bottom Left 
+        Vector3 BL = initGroundPlane[0];
+        // Bottom Right 
+        Vector3 BR = initGroundPlane[1];
+        // Top Left 
+        Vector3 TL = initGroundPlane[2];
+        // Top Right 
+        Vector3 TR = initGroundPlane[3];
+
+        // Get minimum length of side being divided 
+        float minLength; 
+        if(lengthDivide)
+        {
+
+        }
     }
 
     // Function to split building into main and sidewings: Create U-Shape
-    private void splitU(GameObject building)
+    private void splitU(GameObject buildingLot)
     {
+        // Get building of buildingLot 
+        GameObject building = buildingLot.transform.GetChild(0).gameObject;
         // Get initial height of building 
         float initHeight = getBuildingHeight(building);
         // Get vertices of building
@@ -544,95 +585,100 @@ public class cityScript : MonoBehaviour {
         Vector3 BLBRSplit = BL + (BR - BL) * percentageSplit;
         Vector3 TLTRSplit = TL + (TR - TL) * percentageSplit;
 
-        //GameObject BottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BLTLSplit, BRTRSplit });
-        //GameObject TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit, BRTRSplit, TL, TR });
-        //BottomBuildingLot.name = "BottomBuildingLot";
-        //TopBuildingLot.name = "TopBuildingLot";
-
-        //GameObject LeftBuildingLot = quadMesh(new Vector3[] { BL, BLBRSplit, TL, TLTRSplit });
-        //GameObject RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit, BR, TLTRSplit, TR });
-        //LeftBuildingLot.name = "LeftBuildingLot";
-        //RightBuildingLot.name = "RightBuildingLot";
-
-        // Delete original building and building lot
-
-        /*
         // Get the minimum "length" and "width"
         float minBuildLength = Mathf.Min((TL - BL).magnitude, (TR - BR).magnitude);
-        float minBuildWidth = Mathf.Min((BL - BR).magnitude, (TL - TR).magnitude);
+        float minBuildWidth = Mathf.Min((BR - BL).magnitude, (TR - TL).magnitude);
 
         // Check if length-wise division can be done
         bool lengthWiseValid = percentageSplit * minBuildLength > minMainSideLength;
 
         // Check if width-wise division can be done 
         bool widthWiseValid = percentageSplit * minBuildWidth > minMainSideLength;
-        
-        // If both length-wise and width-wise are valid 
-        if(lengthWiseValid && widthWiseValid)
-        {
-            // Decide on length-wise or width-wise 
-            //bool divideLengthwise = Random.value > 0.5f;
-            bool divideLengthwise = true; 
 
-            if(divideLengthwise)
+        GameObject BottomBuildingLot, TopBuildingLot, LeftBuildingLot, RightBuildingLot;
+        GameObject[] MainAndSide = new GameObject[2];
+
+        // If both length-wise and width-wise division is valid 
+        if (lengthWiseValid && widthWiseValid)
+        {
+            // Use random number to decide if length-wise or width-wise division 
+            bool divideLengthWise = Random.value > 0.5f;
+            if (divideLengthWise)
             {
-                // Length-wise division
-                Vector3 BLTLSplit = (TL - BL) * percentageSplit;
-                Vector3 BRTRSplit = (TR - BR) * percentageSplit;
-                // Bottom building lot 
-                GameObject bottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BL + BLTLSplit, BR + BRTRSplit });
-                // Top building lot 
-                GameObject topBuildingLot = quadMesh(new Vector3[] { BL + BLTLSplit, BR + BRTRSplit, TL, TR });
-                // Separate the side wings from main 
-                separateSideWingsMain(initHeight, sideWingHeightPercentage, bottomBuildingLot, topBuildingLot);
-            } else
-            {
-                // Width-wise division 
-                Vector3 BRBLSplit = (BR - BL) * percentageSplit;
-                Vector3 TRTLSplit = (TR - TL) * percentageSplit;
-                // Left building lot 
-                GameObject leftBuildingLot = quadMesh(new Vector3[] { BL, BL + BRBLSplit, TL, TL + TRTLSplit });
-                // Right building lot 
-                GameObject rightBuildingLot = quadMesh(new Vector3[] { BL + BRBLSplit, BR, TL + TRTLSplit, TR });
-                // Separate the side wings from main 
-                separateSideWingsMain(initHeight, sideWingHeightPercentage, leftBuildingLot, rightBuildingLot);
+                // Divide the lot into top and bottom 
+                BottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BLTLSplit, BRTRSplit });
+                TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit, BRTRSplit, TL, TR });
+                BottomBuildingLot.name = "BottomBuildingLot";
+                TopBuildingLot.name = "TopBuildingLot";
+                MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
+                // Set parent of main and side buildings 
+                MainAndSide[0].transform.parent = buildingLot.transform;
+                MainAndSide[1].transform.parent = buildingLot.transform;
+                // Delete original building
+                DestroyImmediate(building);
+                // Destroy temporary lots 
+                DestroyImmediate(TopBuildingLot);
+                DestroyImmediate(BottomBuildingLot);
             }
-            DestroyImmediate(building);
+            else
+            {
+                // Divide the lot into left and right 
+                LeftBuildingLot = quadMesh(new Vector3[] { BL, BLBRSplit, TL, TLTRSplit });
+                RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit, BR, TLTRSplit, TR });
+                LeftBuildingLot.name = "LeftBuildingLot";
+                RightBuildingLot.name = "RightBuildingLot";
+                MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
+                // Set parent of main and side buildings 
+                MainAndSide[0].transform.parent = buildingLot.transform;
+                MainAndSide[1].transform.parent = buildingLot.transform;
+                // Delete original building
+                DestroyImmediate(building);
+                // Destroy temporary lots 
+                DestroyImmediate(RightBuildingLot);
+                DestroyImmediate(LeftBuildingLot);
+            }
         }
-        // Otherwise perform the valid operation 
+        // If only length-wise division is valid 
         else if (lengthWiseValid)
         {
-            // Length-wise division 
-            Vector3 BLTLSplit = (TL - BL) * percentageSplit;
-            Vector3 BRTRSplit = (TR - BR) * percentageSplit;
-            // Bottom building lot 
-            GameObject bottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BL + BLTLSplit, BR + BRTRSplit });
-            // Top building lot 
-            GameObject topBuildingLot = quadMesh(new Vector3[] { BL + BLTLSplit, BR + BRTRSplit, TL, TR });
-            // Separate the side wings from main 
-            separateSideWingsMain(initHeight, sideWingHeightPercentage, bottomBuildingLot, topBuildingLot);
+            // Divide the lot into top and bottom 
+            BottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BLTLSplit, BRTRSplit });
+            TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit, BRTRSplit, TL, TR });
+            BottomBuildingLot.name = "BottomBuildingLot";
+            TopBuildingLot.name = "TopBuildingLot";
+            MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
+            // Set parent of main and side buildings 
+            MainAndSide[0].transform.parent = buildingLot.transform;
+            MainAndSide[1].transform.parent = buildingLot.transform;
+            // Delete original building
             DestroyImmediate(building);
+            // Destroy temporary lots 
+            DestroyImmediate(TopBuildingLot);
+            DestroyImmediate(BottomBuildingLot);
         }
         else if (widthWiseValid)
         {
-            // Width-wise division 
-            Vector3 BRBLSplit = (BL - BR) * percentageSplit;
-            Vector3 TRTLSplit = (TL - TR) * percentageSplit;
-            // Left building lot 
-            GameObject leftBuildingLot = quadMesh(new Vector3[] { BL, BL + BRBLSplit, TL, TL + TRTLSplit });
-            // Right building lot 
-            GameObject rightBuildingLot = quadMesh(new Vector3[] { BL + BRBLSplit, BR, TL + TRTLSplit, TR });
-            // Separate the side wings from main 
-            separateSideWingsMain(initHeight, sideWingHeightPercentage, leftBuildingLot, rightBuildingLot);
+            // Divide the lot into left and right 
+            LeftBuildingLot = quadMesh(new Vector3[] { BL, BLBRSplit, TL, TLTRSplit });
+            RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit, BR, TLTRSplit, TR });
+            LeftBuildingLot.name = "LeftBuildingLot";
+            RightBuildingLot.name = "RightBuildingLot";
+            MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
+            // Set parent of main and side buildings 
+            MainAndSide[0].transform.parent = buildingLot.transform;
+            MainAndSide[1].transform.parent = buildingLot.transform;
+            // Delete original building
             DestroyImmediate(building);
+            // Destroy temporary lots 
+            DestroyImmediate(RightBuildingLot);
+            DestroyImmediate(LeftBuildingLot);
         }
-        */
     }
 
     // Function to apply splitU rule to all buildings 
     private void splitUAll()
     {
-        foreach (GameObject aBuilding in GameObject.FindGameObjectsWithTag("Building"))
+        foreach (GameObject aBuilding in GameObject.FindGameObjectsWithTag("BuildingLot"))
         {
             splitU(aBuilding);
         }
@@ -647,7 +693,7 @@ public class cityScript : MonoBehaviour {
         // Extrude buildings from building block
         extrudeAll(minAllowableBuildingHeight, maxAllowableBuildingHeight);
         // Splt buildings into U-Shapes 
-        //splitUAll();
+        splitUAll();
     }
 	
 	// Update is called once per frame
