@@ -32,6 +32,9 @@ public class cityScript : MonoBehaviour {
     public float minMainSideLength;
     public float minSideWingPercentage;
     public float maxSideWingPercentage;
+    public float minGapSize;
+    public float maxGapSize;
+    public float minSideWingSize; 
 
     // Area calculation function 
     // Parameters: 
@@ -489,7 +492,7 @@ public class cityScript : MonoBehaviour {
     // Returns a GameObject Array 
     // First index of return array: Main 
     // Second index of return array: Sidewing 
-    private GameObject[] separateSideWingsMain(float height, float heightPercentage, GameObject lotA, GameObject lotB)
+    private GameObject[] separateInTwo(float height, float heightPercentage, GameObject lotA, GameObject lotB)
     {
         Debug.Log(height);
         Debug.Log(heightPercentage);
@@ -515,12 +518,17 @@ public class cityScript : MonoBehaviour {
     }
 
     // Function to create a gap in the side-wing building 
-    private void createGap(GameObject sideWing, bool lengthDivide)
+    // Returns a GameObject Array 
+    // First index of return array: SideWingA 
+    // Second index of return array: SideWingB 
+    private void createGap(Transform parent, GameObject sideWing, float percentageSplit, float gapSize, bool lengthDivide)
     {
         // Get initial height of building 
         float initHeight = getBuildingHeight(sideWing);
+
         // Get vertices of building
         Vector3[] initVertices = sideWing.GetComponent<MeshFilter>().mesh.vertices;
+
         // Get original building ground plane 
         Vector3[] initGroundPlane = new Vector3[]
         {
@@ -529,6 +537,7 @@ public class cityScript : MonoBehaviour {
             initVertices[6],
             initVertices[9]
         };
+
         // Bottom Left 
         Vector3 BL = initGroundPlane[0];
         // Bottom Right 
@@ -538,11 +547,67 @@ public class cityScript : MonoBehaviour {
         // Top Right 
         Vector3 TR = initGroundPlane[3];
 
+        // Find split points
+        Vector3 BLTLSplit = BL + (TL - BL) * percentageSplit;
+        Vector3 BRTRSplit = BR + (TR - BR) * percentageSplit;
+        Vector3 BLBRSplit = BL + (BR - BL) * percentageSplit;
+        Vector3 TLTRSplit = TL + (TR - TL) * percentageSplit;
+
         // Get minimum length of side being divided 
         float minLength; 
         if(lengthDivide)
         {
+            minLength = Mathf.Min((TL - BL).magnitude, (TR - BR).magnitude);
+        } else
+        {
+            minLength = Mathf.Min((BR - BL).magnitude, (TR - TL).magnitude);
+        }
 
+        // Ensure minimum size constraint is met 
+        if(minLength > minSideWingSize)
+        {
+            if(lengthDivide)
+            {
+                // Divide into top and bottom
+                GameObject BottomBuildingLot = quadMesh(new Vector3[] { BL, BR, BLTLSplit - (TL - BL).normalized * gapSize * 0.5f, BRTRSplit - (TR - BR).normalized * gapSize * 0.5f });
+                GameObject TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit + (TL - BL).normalized * gapSize * 0.5f, BRTRSplit + (TR - BR).normalized * gapSize * 0.5f, TL, TR });
+                BottomBuildingLot.name = "BottomBuildingLot";
+                TopBuildingLot.name = "TopBuildingLot";
+                // Generate buildings 
+                float sideWingPercentage = Random.Range(minSideWingPercentage, maxSideWingPercentage);
+                GameObject[] sideWings = separateInTwo(initHeight, sideWingPercentage, BottomBuildingLot, TopBuildingLot);
+                sideWings[0].name = "sideWingA";
+                sideWings[1].name = "sideWingB";
+                sideWings[0].tag = "SideWing";
+                sideWings[1].tag = "SideWing";
+                // Set parent 
+                sideWings[0].transform.SetParent(parent);
+                sideWings[1].transform.SetParent(parent);
+                DestroyImmediate(BottomBuildingLot);
+                DestroyImmediate(TopBuildingLot);
+                DestroyImmediate(sideWing);
+            }
+            else
+            {
+                // Divide into left and right 
+                GameObject LeftBuildingLot = quadMesh(new Vector3[] { BL, BLBRSplit - (BR - BL).normalized * gapSize * 0.5f, TL, TLTRSplit - (TR - TL).normalized * gapSize * 0.5f });
+                GameObject RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit + (BR - BL).normalized * gapSize * 0.5f, BR, TLTRSplit + (TR - TL).normalized * gapSize * 0.5f, TR });
+                LeftBuildingLot.name = "LeftBuildingLot";
+                RightBuildingLot.name = "RightBuildingLot";
+                // Generate buildings 
+                float sideWingPercentage = Random.Range(minSideWingPercentage, maxSideWingPercentage);
+                GameObject[] sideWings = separateInTwo(initHeight, sideWingPercentage, LeftBuildingLot, RightBuildingLot);
+                sideWings[0].name = "sideWingA";
+                sideWings[1].name = "sideWingB";
+                sideWings[0].tag = "SideWing";
+                sideWings[1].tag = "SideWing";
+                // Set parent 
+                sideWings[0].transform.SetParent(parent);
+                sideWings[1].transform.SetParent(parent);
+                DestroyImmediate(LeftBuildingLot);
+                DestroyImmediate(RightBuildingLot);
+                DestroyImmediate(sideWing);
+            }
         }
     }
 
@@ -610,7 +675,7 @@ public class cityScript : MonoBehaviour {
                 TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit, BRTRSplit, TL, TR });
                 BottomBuildingLot.name = "BottomBuildingLot";
                 TopBuildingLot.name = "TopBuildingLot";
-                MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
+                MainAndSide = separateInTwo(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
                 // Set parent of main and side buildings 
                 MainAndSide[0].transform.parent = buildingLot.transform;
                 MainAndSide[1].transform.parent = buildingLot.transform;
@@ -619,6 +684,9 @@ public class cityScript : MonoBehaviour {
                 // Destroy temporary lots 
                 DestroyImmediate(TopBuildingLot);
                 DestroyImmediate(BottomBuildingLot);
+                // Create gap between sidewings 
+                float sideWingGapSize = Random.Range(minGapSize, maxGapSize);
+                createGap(buildingLot.transform, MainAndSide[1], Random.Range(0.4f, 0.6f), sideWingGapSize, false);
             }
             else
             {
@@ -627,7 +695,7 @@ public class cityScript : MonoBehaviour {
                 RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit, BR, TLTRSplit, TR });
                 LeftBuildingLot.name = "LeftBuildingLot";
                 RightBuildingLot.name = "RightBuildingLot";
-                MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
+                MainAndSide = separateInTwo(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
                 // Set parent of main and side buildings 
                 MainAndSide[0].transform.parent = buildingLot.transform;
                 MainAndSide[1].transform.parent = buildingLot.transform;
@@ -636,6 +704,9 @@ public class cityScript : MonoBehaviour {
                 // Destroy temporary lots 
                 DestroyImmediate(RightBuildingLot);
                 DestroyImmediate(LeftBuildingLot);
+                // Create gap between sidewings 
+                float sideWingGapSize = Random.Range(minGapSize, maxGapSize);
+                createGap(buildingLot.transform, MainAndSide[1], Random.Range(0.4f, 0.6f), sideWingGapSize, true);
             }
         }
         // If only length-wise division is valid 
@@ -646,7 +717,7 @@ public class cityScript : MonoBehaviour {
             TopBuildingLot = quadMesh(new Vector3[] { BLTLSplit, BRTRSplit, TL, TR });
             BottomBuildingLot.name = "BottomBuildingLot";
             TopBuildingLot.name = "TopBuildingLot";
-            MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
+            MainAndSide = separateInTwo(initHeight, sideWingHeightPercentage, TopBuildingLot, BottomBuildingLot);
             // Set parent of main and side buildings 
             MainAndSide[0].transform.parent = buildingLot.transform;
             MainAndSide[1].transform.parent = buildingLot.transform;
@@ -655,6 +726,9 @@ public class cityScript : MonoBehaviour {
             // Destroy temporary lots 
             DestroyImmediate(TopBuildingLot);
             DestroyImmediate(BottomBuildingLot);
+            // Create gap between sidewings 
+            float sideWingGapSize = Random.Range(minGapSize, maxGapSize);
+            createGap(buildingLot.transform, MainAndSide[1], Random.Range(0.4f, 0.6f), sideWingGapSize, false);
         }
         else if (widthWiseValid)
         {
@@ -663,7 +737,7 @@ public class cityScript : MonoBehaviour {
             RightBuildingLot = quadMesh(new Vector3[] { BLBRSplit, BR, TLTRSplit, TR });
             LeftBuildingLot.name = "LeftBuildingLot";
             RightBuildingLot.name = "RightBuildingLot";
-            MainAndSide = separateSideWingsMain(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
+            MainAndSide = separateInTwo(initHeight, sideWingHeightPercentage, LeftBuildingLot, RightBuildingLot);
             // Set parent of main and side buildings 
             MainAndSide[0].transform.parent = buildingLot.transform;
             MainAndSide[1].transform.parent = buildingLot.transform;
@@ -672,6 +746,9 @@ public class cityScript : MonoBehaviour {
             // Destroy temporary lots 
             DestroyImmediate(RightBuildingLot);
             DestroyImmediate(LeftBuildingLot);
+            // Create gap between sidewings 
+            float sideWingGapSize = Random.Range(minGapSize, maxGapSize);
+            createGap(buildingLot.transform, MainAndSide[1], Random.Range(0.4f, 0.6f), sideWingGapSize, true);
         }
     }
 

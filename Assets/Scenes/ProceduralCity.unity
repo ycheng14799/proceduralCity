@@ -251,6 +251,9 @@ MonoBehaviour:
   minMainSideLength: 5
   minSideWingPercentage: 0.5
   maxSideWingPercentage: 1
+  minGapSize: 1
+  maxGapSize: 2
+  minSideWingSize: 3
 --- !u!4 &1830812645
 Transform:
   m_ObjectHideFlags: 0
