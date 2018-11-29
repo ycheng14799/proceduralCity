@@ -12,12 +12,25 @@ public class StaircaseCityScript : MonoBehaviour {
     public float m_buildingLotWidth;
     public float m_buildingLotLength;
 
-    // Minimum width and height of individual building components
-    public float m_minBuildingPartWidth;
-    public float m_minBuildingPartLength;
+    // Width and length percentages of individual building components
+    public float m_minBuildingPartSidePercentage;
+    public float m_maxBuildingPartSidePercentage; 
 
     // Building gap size 
-    public float m_buildingGapSize;
+    public float m_buildingGapMaxSize;
+
+    // Initial building height 
+    public float m_initHeight;
+    // Building height increment 
+    public float m_heightIncrement;
+    // Sidewing height variation 
+    public float m_sideWingHeightVariation;
+
+    /* Private variables */
+    // Height variable of buildings 
+    // Should increment with each building 
+    private float m_height; 
+    
 
     // QuadMesh method
     // Generates a Quad GameObject given vertices
@@ -315,8 +328,9 @@ public class StaircaseCityScript : MonoBehaviour {
     // string ATag: Tag of part of divided quad
     // string BTag: Tag of part of divided quad 
     // GameObject parent: Parent of divded quads
-    // Build method 
-    private void subdivide(GameObject quad, bool lengthWise, float splitAPercentage, float splitBPercentage, float gapPercentage, string AName, string BName, string ATag, string BTag, GameObject parent)
+    // @RetVal: 
+    // GameObject[]: Array of quad GameObjects 
+    private GameObject[] subdivide(GameObject quad, bool lengthWise, float splitAPercentage, float splitBPercentage, float gapPercentage, string AName, string BName, string ATag, string BTag, GameObject parent)
     {
         // Get the initial quad's vertices 
         Vector3[] initQuadVertices = quad.GetComponent<MeshFilter>().mesh.vertices;
@@ -362,15 +376,79 @@ public class StaircaseCityScript : MonoBehaviour {
         GameObject quadB = new GameObject();
         quadMesh(quadA, newAVertices, AName, ATag, parent);
         quadMesh(quadB, newBVertices, BName, BTag, parent);
+        // Reset local positions 
+        quadA.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        quadB.transform.localPosition = new Vector3(0.0f, 0.0f, 0.0f);
+        // Return quads 
+        GameObject[] quads = new GameObject[] { quadA, quadB };
+        return quads; 
     }
-    // Generates a building 
+
+    // Function to generate a building 
+    // @Params: 
+    // GameObject quad: Building lot 
     private void build(GameObject quad)
     {
+        // Divide building into Main and SideWing
+        // Determine lengthwise or widthwise division 
+        bool lengthwise = Random.value > 0.5f;
+        // Randomise tags and names 
+        string nameA, nameB, tagA, tagB; 
+        if(Random.value > 0.5f)
+        {
+            nameA = "MainBuilding";
+            nameB = "SideWing";
+            tagA = "MainBuilding";
+            tagB = "SideWing";
+        } else
+        {
+            nameA = "SideWing";
+            nameB = "MainBuilding";
+            tagA = "SideWing";
+            tagB = "MainBuilding";
+        }
+        // Determine split percentages 
+        float splitAPercentage = Random.Range(m_minBuildingPartSidePercentage, m_maxBuildingPartSidePercentage);
+        float splitBPercentage = Random.Range(m_minBuildingPartSidePercentage, m_maxBuildingPartSidePercentage);
+        // Divide building into Main and SideWing
+        GameObject[] quads = subdivide(quad, lengthwise, splitAPercentage, splitBPercentage, 0.0f, nameA, nameB, tagA, tagB, quad);
+        
+        // Split SideWing
+        int sideWingIndex = 0;
+        if (nameA != "SideWing")
+        {
+            sideWingIndex = 1;
+        }
+        // Determine split percentages 
+        splitAPercentage = Random.Range(m_minBuildingPartSidePercentage, m_maxBuildingPartSidePercentage);
+        splitBPercentage = Random.Range(m_minBuildingPartSidePercentage, m_maxBuildingPartSidePercentage);
+        // Determine gap percentage 
+        float gapPercentage = Random.Range(0.0f, m_buildingGapMaxSize);
+        // Set lengthwise or widthwise 
+        lengthwise = !lengthwise;
+        // Divide sidewings 
+        GameObject[] sideWings = subdivide(quads[sideWingIndex], lengthwise, splitAPercentage, splitBPercentage, gapPercentage, "SideWing", "SideWing", "SideWing", "SideWing", quad);
+        // Store building parts in a singular array 
+        GameObject[] buildingParts = new GameObject[]
+        {
+            quads[(sideWingIndex + 1) % 2],
+            sideWings[0],
+            sideWings[1]
+        };
+        // Destroy undivided side-wing 
+        Destroy(quads[sideWingIndex]);
 
+        // Extrude building lots 
+        extrudeQuad(buildingParts[0], m_height, null, null, null);
+        extrudeQuad(buildingParts[1], m_height + Random.Range(-m_sideWingHeightVariation, 0.0f), null, null, null);
+        extrudeQuad(buildingParts[2], m_height + Random.Range(-m_sideWingHeightVariation, 0.0f), null, null, null);
     }
 
     // Use this for initialization
     void Start () {
+        // Initialize height 
+        m_height = m_initHeight;
+
         // Define initial building lot vertices 
         Vector3[] initBuildingVertices = new Vector3[]
         {
@@ -384,11 +462,15 @@ public class StaircaseCityScript : MonoBehaviour {
         {
             // Define initial building lots
             quadMesh(m_BuildingLots[i], initBuildingVertices, null, null, null);
+            // Build 
+            build(m_BuildingLots[i]);
+            // Update height 
+            m_height += m_heightIncrement;
         }
+
     }
 	
 	// Update is called once per frame
 	void Update () {
-		
-	}
+    }
 }
