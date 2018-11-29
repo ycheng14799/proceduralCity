@@ -14,7 +14,10 @@ public class StaircaseCityScript : MonoBehaviour {
 
     // Width and length percentages of individual building components
     public float m_minBuildingPartSidePercentage;
-    public float m_maxBuildingPartSidePercentage; 
+    public float m_maxBuildingPartSidePercentage;
+
+    // Between building gap size 
+    public float m_betweenBuildingGapSize; 
 
     // Building gap size 
     public float m_buildingGapMaxSize;
@@ -26,11 +29,15 @@ public class StaircaseCityScript : MonoBehaviour {
     // Sidewing height variation 
     public float m_sideWingHeightVariation;
 
+    // Building movement speed 
+    public float m_moveSpeed; 
+
     /* Private variables */
     // Height variable of buildings 
     // Should increment with each building 
-    private float m_height; 
-    
+    private float m_height;
+    // Initial lot vertices 
+    private Vector3[] initBuildingVertices;
 
     // QuadMesh method
     // Generates a Quad GameObject given vertices
@@ -450,7 +457,7 @@ public class StaircaseCityScript : MonoBehaviour {
         m_height = m_initHeight;
 
         // Define initial building lot vertices 
-        Vector3[] initBuildingVertices = new Vector3[]
+        initBuildingVertices = new Vector3[]
         {
             new Vector3(-0.5f * m_buildingLotWidth, 0.0f, -0.5f * m_buildingLotLength),
             new Vector3(0.5f * m_buildingLotWidth, 0.0f, -0.5f * m_buildingLotLength),
@@ -464,13 +471,37 @@ public class StaircaseCityScript : MonoBehaviour {
             quadMesh(m_BuildingLots[i], initBuildingVertices, null, null, null);
             // Build 
             build(m_BuildingLots[i]);
+            // Transform building position 
+            m_BuildingLots[i].transform.position = new Vector3(0.0f, 0.0f, i * (m_buildingLotLength + m_betweenBuildingGapSize));
             // Update height 
             m_height += m_heightIncrement;
+            
         }
 
     }
 	
 	// Update is called once per frame
 	void Update () {
+        // Shift buildings backwards 
+        for(int i = 0; i < m_BuildingLots.Length; i++)
+        {
+            // Change building position 
+            m_BuildingLots[i].transform.position += Time.deltaTime * new Vector3(0.0f, 0.0f, m_moveSpeed);
+            // Regenerate a new building when out of field of view 
+            if (m_BuildingLots[i].transform.position.z <= -m_buildingLotLength)
+            {
+                // Destroy out of field of view building 
+                DestroyImmediate(m_BuildingLots[i]);
+                // Rebuild building
+                m_BuildingLots[i] = new GameObject(); 
+                quadMesh(m_BuildingLots[i], initBuildingVertices, "BuildingLot", "BuildingLot", this.gameObject);
+                // Build 
+                build(m_BuildingLots[i]);
+                // Update height 
+                m_height += m_heightIncrement;
+                // Change position of building to end of queue 
+                m_BuildingLots[i].transform.position = new Vector3(0.0f, 0.0f, (m_BuildingLots.Length - 1) * (m_buildingLotLength + m_betweenBuildingGapSize));
+            }
+        }
     }
 }
